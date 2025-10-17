@@ -86,9 +86,10 @@ class ThumbnailFontIconView: ThumbnailTitleView {
         replaceCharIfNeeded(Symbols.filledCircledStar.rawValue)
     }
     
+    // temp disabled due to out of range issue
     func setText(_ monitorId: UInt32, _ text: String) {
-        replaceCharIfNeeded(text)
-        textColor = colorFrom(text: text)
+//        replaceCharIfNeeded(text)
+//        textColor = colorFrom(text: text)
     }
 
     private func replaceCharIfNeeded(_ newChar: String) {

@@ -20,6 +20,7 @@ class Window {
     var size: CGSize?
     var monitorId: UInt32?
     var aerospaceId: String?
+    var isInFocusedSpace: Bool = false
     var spaceIds = [CGSSpaceID.max]
     var spaceIndexes = [SpaceIndex.max]
     var axUiElement: AXUIElement?

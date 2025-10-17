@@ -3,7 +3,7 @@ import Cocoa
 func executeSearch() -> [String]? {    // Create a Process instance
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/aerospace") // Using zsh to execute the command
-    process.arguments = ["list-windows", "--all", "--format", "%{window-id},%{monitor-id},%{workspace}"]
+    process.arguments = ["list-windows", "--workspace", "focused", "--format", "%{window-id},%{monitor-id},%{workspace}"]
     
     // Create a pipe to capture the output
     let pipe = Pipe()
@@ -81,9 +81,17 @@ class Windows {
         print("Flushing Aerospace Stats")
         if let aerospaceMapping = getAerospaceMapping() {
             list.forEach { window in
-                if let result = aerospaceMapping[window.cgWindowId!] {
-                    window.monitorId = result.0
-                    window.aerospaceId = result.1
+                if window.cgWindowId != nil {
+                    if let result = aerospaceMapping[window.cgWindowId!] {
+                        window.monitorId = result.0
+                        window.aerospaceId = result.1
+                        // todo: only when actually focused
+                        window.isInFocusedSpace = true
+                    } else {
+                        window.isInFocusedSpace = false
+                    }
+                } else {
+                    window.isInFocusedSpace = false
                 }
             }
         }
@@ -350,12 +358,13 @@ class Windows {
         let spaceIdsAndIndexes = Spaces.idsAndIndexes.map { $0.0 }
         lazy var cgsWindowIds = Spaces.windowsInSpaces(spaceIdsAndIndexes)
         lazy var visibleCgsWindowIds = Spaces.windowsInSpaces(spaceIdsAndIndexes, false)
+        
+        flushAerospaceStats()
         for window in list {
             detectTabbedWindows(window, cgsWindowIds, visibleCgsWindowIds)
             updatesWindowSpace(window)
             refreshIfWindowShouldBeShownToTheUser(window)
         }
-        flushAerospaceStats()
         sort()
         refreshWhichWindowsToShowTheUser()
         if (!list.contains { $0.shouldShowTheUser }) { return false }
@@ -440,7 +449,7 @@ class Windows {
                 !window.isWindowlessApp &&
                 !(!(Preferences.showFullscreenWindows[App.app.shortcutIndex] != .hide) && window.isFullscreen) &&
                 !(!(Preferences.showMinimizedWindows[App.app.shortcutIndex] != .hide) && window.isMinimized) &&
-                !(Preferences.spacesToShow[App.app.shortcutIndex] == .visible && !Spaces.visibleSpaces.contains { visibleSpace in window.spaceIds.contains { $0 == visibleSpace } }) &&
+             !(Preferences.spacesToShow[App.app.shortcutIndex] == .visible && (!Spaces.visibleSpaces.contains { visibleSpace in window.spaceIds.contains { $0 == visibleSpace } }) || !window.isInFocusedSpace) &&
                 !(Preferences.screensToShow[App.app.shortcutIndex] == .showingAltTab && !window.isOnScreen(NSScreen.preferred)) &&
                 (Preferences.showTabsAsWindows || !window.isTabbed))
     }
