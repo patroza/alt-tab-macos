@@ -482,7 +482,7 @@ class Windows {
                 !window.isWindowlessApp &&
                 !(!(Preferences.showFullscreenWindows[App.app.shortcutIndex] != .hide) && window.isFullscreen) &&
                 !(!(Preferences.showMinimizedWindows[App.app.shortcutIndex] != .hide) && window.isMinimized) &&
-             !(Preferences.spacesToShow[App.app.shortcutIndex] == .visible && (!Spaces.visibleSpaces.contains { visibleSpace in window.spaceIds.contains { $0 == visibleSpace } }) || !window.isInFocusedSpace) &&
+             !(Preferences.spacesToShow[App.app.shortcutIndex] == .visible && (!Spaces.visibleSpaces.contains { visibleSpace in window.spaceIds.contains { $0 == visibleSpace } } || !window.isInFocusedSpace)) &&
                 !(Preferences.screensToShow[App.app.shortcutIndex] == .showingAltTab && !window.isOnScreen(NSScreen.preferred)) &&
                 (Preferences.showTabsAsWindows || !window.isTabbed))
     }
