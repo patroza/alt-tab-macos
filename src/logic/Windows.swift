@@ -399,7 +399,6 @@ class Windows {
             refreshIfWindowShouldBeShownToTheUser(window)
         }
         sort()
-        refreshWhichWindowsToShowTheUser()
         if (!list.contains { $0.shouldShowTheUser }) { return false }
         return true
     }
@@ -454,14 +453,6 @@ class Windows {
                             window.shouldShowTheUser = false
                         }
                     }
-                }
-            }
-        }
-        // For recently focused, keep only 8
-        if Preferences.windowOrder[App.app.shortcutIndex] == .recentlyFocused {
-            for window in list {
-                if let index = list.firstIndex(where: { $0.cgWindowId == window.cgWindowId }), index >= 8 {
-                    window.shouldShowTheUser = false
                 }
             }
         }
