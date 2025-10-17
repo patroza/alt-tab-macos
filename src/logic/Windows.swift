@@ -3,7 +3,7 @@ import Cocoa
 func executeSearch() -> [String]? {    // Create a Process instance
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/aerospace") // Using zsh to execute the command
-    process.arguments = ["list-windows", "--workspace", "focused", "--format", "%{window-id},%{monitor-id},%{workspace}"]
+    process.arguments = ["list-windows", "--all", "--format", "%{window-id},%{monitor-id},%{workspace}"]
     
     // Create a pipe to capture the output
     let pipe = Pipe()
@@ -32,18 +32,52 @@ func executeSearch() -> [String]? {    // Create a Process instance
     }
 }
 
-func getAerospaceMapping() -> [UInt32: (UInt32, String)]? {
+func executeFocusedWorkspace() -> String? {    // Create a Process instance
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/aerospace") // Using zsh to execute the command
+    process.arguments = ["list-workspaces", "--focused"]
+    
+    // Create a pipe to capture the output
+    let pipe = Pipe()
+    process.standardOutput = pipe
+    
+    do {
+        // Launch the process
+        try process.run()
+        
+        // Read the output data
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        
+        // Convert the data to a string
+        guard let outputString = String(data: data, encoding: .utf8) else {
+            print("Failed to convert data to string")
+            return nil
+        }
+        
+        // Split the output by lines
+        let lines = outputString.split(separator: "\n").map { String($0) }
+        return lines[0]
+        
+    } catch {
+        print("Failed to run command: \(error)")
+        return nil
+    }
+}
+
+func getAerospaceMapping() -> [UInt32: (UInt32, String, Bool)]? {
     let lines = executeSearch()
     if lines == nil {
         return nil
     }
-    var mapping = [UInt32: (UInt32, String)]()
+    let focusedWorkspace = executeFocusedWorkspace()
+    var mapping = [UInt32: (UInt32, String, Bool)]()
     for line in lines! {
         let parts = line.split(separator: ",")
         if parts.count == 3 {
             if let number = UInt32(parts[0]), let monitor = UInt32(parts[1]){
+                let space = String(parts[2])
                 // Add the mapping to the dictionary
-                mapping[number] = (monitor, String(parts[2]))
+                mapping[number] = (monitor, space, space == focusedWorkspace)
             } else {
                 print("Invalid number: \(parts[0])")
             }
@@ -85,8 +119,7 @@ class Windows {
                     if let result = aerospaceMapping[window.cgWindowId!] {
                         window.monitorId = result.0
                         window.aerospaceId = result.1
-                        // todo: only when actually focused
-                        window.isInFocusedSpace = true
+                        window.isInFocusedSpace = result.2
                     } else {
                         window.isInFocusedSpace = false
                     }
